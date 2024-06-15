@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name="UserDetails")
-public class UserDetails {
+public class UserInfo {
 	
 
 	@Id
@@ -56,11 +56,11 @@ public class UserDetails {
 		this.address = address;
 	}
 	
-	public UserDetails(){
+	public UserInfo(){
 		
 	}
 
-	public UserDetails(long id, String phone, String address, UsersData userData) {
+	public UserInfo(long id, String phone, String address, UsersData userData) {
 		super();
 		this.id = id;
 		this.phone = phone;
