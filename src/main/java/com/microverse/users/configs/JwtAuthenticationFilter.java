@@ -17,6 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
+import io.jsonwebtoken.ExpiredJwtException;
+//import io.jsonwebtoken;
+
 import com.microverse.users.security.jwtservices.JwtService;
 
 import java.io.IOException;
@@ -38,12 +41,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
 		final String authHeader = request.getHeader("Authorization");
 		
 		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			System.out.println("HERE$$$$$$$$$$$$$$$$");
             filterChain.doFilter(request, response);  // continue other filters
             return;
         }
 		
 		
 		try {
+			
+			System.out.println("HERE$$$$$$$$$$$$$$$$  in ELSE");
 			
 			final String jwt = authHeader.substring(7);
             final String userEmail = jwtService.extractUsername(jwt);
@@ -68,9 +74,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             filterChain.doFilter(request, response);
             
 			
-		}catch(Exception e) {
-			 handlerExceptionResolver.resolveException(request, response, null, e);
 		}
+		catch(ExpiredJwtException e) {
+			System.out.println("HERE$$$$$$$$$$$$$$$$  in JWT EXCEPTION");
+
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			response.getWriter().write("Invalid JWT");
+		}
+		catch(Exception e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			response.getWriter().write(e.getLocalizedMessage());
+//			 handlerExceptionResolver.resolveException(request, response, null, e);
+			
+		}
+		
 		
 	}
 	

@@ -3,8 +3,18 @@ package com.microverse.users.Responses;
 public class LoginResponse {
 	
 	private String token;
+	
+	private String refreshToken;
 
-    private long expiresIn;
+    public String getRefreshToken() {
+		return refreshToken;
+	}
+
+	public void setRefreshToken(String refreshToken) {
+		this.refreshToken = refreshToken;
+	}
+
+	private long expiresIn;
 
 	public String getToken() {
 		return token;

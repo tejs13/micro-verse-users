@@ -1,5 +1,6 @@
 package com.microverse.users.controllers;
 
+import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.microverse.users.Responses.LoginResponse;
+import com.microverse.users.dto.RefreshTokenDTO;
 import com.microverse.users.dto.UserLoginDTO;
 import com.microverse.users.dto.UserRegistrationDTO;
 import com.microverse.users.models.UsersData;
@@ -49,15 +51,43 @@ public class AuhenticationController {
 	@PostMapping("/login")
 	public ResponseEntity<LoginResponse> authenticate(@RequestBody UserLoginDTO UserLoginDto) {
 		UsersData authenticatedUser = authenticationService.authenticate(UserLoginDto);
-		byte[] keyBytes = Decoders.BASE64.decode("bWljcm92ZXJzZQ==");
         String jwtToken = jwtService.generateToken(authenticatedUser);
-        
+        String jwtRefreshToken = jwtService.generateRefreshToken(authenticatedUser);
 
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setToken(jwtToken);
         loginResponse.setExpiresIn(jwtService.getExpirationTime());
+        loginResponse.setRefreshToken(jwtRefreshToken);
 
         return ResponseEntity.ok(loginResponse);
+    }
+	
+
+	@PostMapping("/refresh")
+	public ResponseEntity<HashMap<String, String>> refreshToken(@RequestBody RefreshTokenDTO refreshTokenDto) {
+		HashMap<String, String> responseObj = new HashMap<String, String>();
+		try {
+			System.out.println("in REFRESH ----------------");
+			String username = jwtService.extractUsername(refreshTokenDto.getAccessToken());
+			System.out.println(username + "&&&&&&&");
+		}
+		catch(Exception e) {
+			HashMap<String, String> er = new HashMap<String, String>();
+			er.put("Error", e.getMessage());
+			return new ResponseEntity<HashMap<String, String>>(er, HttpStatus.BAD_REQUEST);
+		}
+		
+		return new ResponseEntity<HashMap<String, String>>(responseObj, HttpStatus.OK);
+//		UsersData authenticatedUser = authenticationService.authenticate(UserLoginDto);
+//        String jwtToken = jwtService.generateToken(authenticatedUser);
+//        String jwtRefreshToken = jwtService.generateRefreshToken(authenticatedUser);
+//
+//        LoginResponse loginResponse = new LoginResponse();
+//        loginResponse.setToken(jwtToken);
+//        loginResponse.setExpiresIn(jwtService.getExpirationTime());
+//        loginResponse.setRefreshToken(jwtRefreshToken);
+//
+//        return ResponseEntity.ok(loginResponse);
     }
 	
 	
