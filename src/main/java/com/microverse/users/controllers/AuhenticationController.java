@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +39,9 @@ public class AuhenticationController {
 	@Autowired
     private AuthenticationService authenticationService;
 	
+	@Autowired
+    private UserDetailsService userDetailsService;
+	
 	// get all employees
 	@PostMapping("/signup")
 	public ResponseEntity<UsersData> test(@RequestBody UserRegistrationDTO userRegistrationDTO) {
@@ -64,31 +69,40 @@ public class AuhenticationController {
 	
 
 	@PostMapping("/refresh")
-	public ResponseEntity<HashMap<String, String>> refreshToken(@RequestBody RefreshTokenDTO refreshTokenDto) {
+	public ResponseEntity<LoginResponse> refreshToken(@RequestBody RefreshTokenDTO refreshTokenDto) {
 		HashMap<String, String> responseObj = new HashMap<String, String>();
+		LoginResponse loginResponse = new LoginResponse();
 		try {
 			System.out.println("in REFRESH ----------------");
-			String username = jwtService.extractUsername(refreshTokenDto.getAccessToken());
-			System.out.println(username + "&&&&&&&");
+			String userEmail = jwtService.extractUsernameRefresh(refreshTokenDto.getRefreshToken());
+			System.out.println(userEmail + "&&&&&&&");
+			if(userEmail != null) {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+				if(jwtService.isTokenValidRefresh(refreshTokenDto.getRefreshToken(), userDetails)) {
+					String jwtToken = jwtService.generateToken(userDetails);
+					String jwtRefreshToken = jwtService.generateRefreshToken(userDetails);
+					
+			        loginResponse.setToken(jwtToken);
+			        loginResponse.setExpiresIn(jwtService.getExpirationTime());
+			        loginResponse.setRefreshToken(jwtRefreshToken);
+
+			        return ResponseEntity.ok(loginResponse);
+					 
+				}
+			}
+			
+			
+			
 		}
 		catch(Exception e) {
-			HashMap<String, String> er = new HashMap<String, String>();
-			er.put("Error", e.getMessage());
-			return new ResponseEntity<HashMap<String, String>>(er, HttpStatus.BAD_REQUEST);
+//			HashMap<String, String> er = new HashMap<String, String>();
+//			er.put("Error", e.getMessage());
+			
+			return new ResponseEntity<LoginResponse>(HttpStatus.BAD_REQUEST);
 		}
 		
-		return new ResponseEntity<HashMap<String, String>>(responseObj, HttpStatus.OK);
-//		UsersData authenticatedUser = authenticationService.authenticate(UserLoginDto);
-//        String jwtToken = jwtService.generateToken(authenticatedUser);
-//        String jwtRefreshToken = jwtService.generateRefreshToken(authenticatedUser);
-//
-//        LoginResponse loginResponse = new LoginResponse();
-//        loginResponse.setToken(jwtToken);
-//        loginResponse.setExpiresIn(jwtService.getExpirationTime());
-//        loginResponse.setRefreshToken(jwtRefreshToken);
-//
-//        return ResponseEntity.ok(loginResponse);
-    }
+		return new ResponseEntity<LoginResponse>(loginResponse, HttpStatus.OK);
+	}
 	
 	
 	
